@@ -1,32 +1,34 @@
-# RAG Agent Frontend
+# RAG Agent Frontend (Debugger)
 
-A Streamlit-based dashboard for interacting with the RAG Agent. It connects to the backend API via HTTP requests.
+A Streamlit-based dashboard for interacting with the RAG Agent. This interface acts as a full "debugger" to monitor the agent's internal processes.
 
-## Setup
+## 🚀 Setup
 
 1. **Start the Backend API**:
    ```bash
-   uvicorn app.main:app --reload
+   python run.py
    ```
 
 2. **Start the Frontend**:
    In a separate terminal:
    ```bash
-   streamlit run frontend/app.py
+   .\.venv\Scripts\python.exe -m streamlit run frontend/app.py
    ```
 
-## Configuration
+## 🛠️ Features
 
-The frontend connects to `http://localhost:8000` by default. You can change this by setting the `API_URL` environment variable.
+- **Chat & Persistence**: Full conversational history supported by PostgreSQL.
+- **RAG Inspector**: Expandable sections show the exact document chunks retrieved from the knowledge base.
+- **Latency Tracking**: Real-time response time monitoring for each agent interaction.
+- **Knowledge Base Browser**: Sidebar list of all documents currently ingested.
+- **Session Control**: Manually reset or clear `thread_id` to start fresh conversations.
 
-## Features
+## 🔌 Connection
 
-- **Chat Interface**: Ask questions and get answers.
-- **Session Management**: Each session has a unique ID (`thread_id`) stored in `st.session_state`.
-- **API Health Check**: Visual indicator in the sidebar showing if the backend is reachable.
-- **Clear History**: Button to restart the conversation.
+The frontend connects to the FastAPI backend at `http://localhost:8000`. 
+Environment override: `API_URL`.
 
-## Architecture
+## 🏗️ Structure
 
-- `app.py`: Main Streamlit application logic and UI.
-- `api_client.py`: Wrapper for backend API calls (`requests` library).
+- `app.py`: Main UI and state handling.
+- `api_client.py`: Decoupled HTTP client for backend communication.
