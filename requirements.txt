@@ -1,0 +1,32 @@
+# --- Core API & Async ---
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic-settings
+asyncpg
+sqlalchemy
+
+# --- LangChain & LangGraph (Orchestration) ---
+langgraph
+langchain
+langchain-core
+langchain-community
+langchain-ollama
+langgraph-checkpoint-postgres
+
+# --- RAG & File Processing ---
+# PDF, CSV, DOCX and Image Processing
+pypdf
+pandas
+unstructured[all-docs]
+pillow
+lxml
+
+# --- Database & Vectors ---
+psycopg[binary]
+psycopg_pool
+pgvector
+
+# --- Observability ---
+structlog
+opentelemetry-api
