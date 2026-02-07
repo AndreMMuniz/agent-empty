@@ -1,4 +1,0 @@
-{"input": "Qual é o conteúdo do arquivo sample.txt?", "ground_truth": "O conteúdo é um texto de exemplo para testar a ingestão do RAG, contendo múltiplos parágrafos para verificação de chunking.", "category": "documentação"}
-{"input": "Resuma o segundo arquivo (sample2.txt).", "ground_truth": "O segundo arquivo discute a importância de embeddings vetoriais em sistemas modernos de IA, permitindo busca semântica além de correspondência de palavras-chave.", "category": "resumo"}
-{"input": "O que são embeddings vetoriais?", "ground_truth": "São representações numéricas de texto que permitem comparação usando métricas de similaridade.", "category": "conceito"}
-{"input": "Qual modelo de embedding estamos usando?", "ground_truth": "Estamos usando o modelo nomic-embed-text.", "category": "configuração"}

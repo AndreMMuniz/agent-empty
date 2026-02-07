@@ -52,3 +52,11 @@ checkpoints/
 # OS
 .DS_Store
 Thumbs.db
+
+# Production Data & Reports
+data/raw/*
+!data/raw/sample.txt
+data/datasets/*.csv
+data/datasets/*.md
+postgres_data/
+

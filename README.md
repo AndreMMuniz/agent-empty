@@ -1,95 +1,95 @@
-# Bubble.io Analysis & Consulting Agent (RAG Enabled)
+# 🤖 Agent Empty - Template LangGraph + RAG
 
-An intelligent assistant built with **LangGraph**, **FastAPI**, and **PostgreSQL (PGVector)** to provide technical consulting and log analysis for Bubble.io developers. Now featuring a complete **RAG Engine** and an **Observability Dashboard**.
+Este é um template de arquitetura robusta para criação de Agentes de IA Conversacional.
+Ele utiliza **FastAPI** (Backend), **LangGraph** (Orquestração), **PostgreSQL/PGVector** (Memória e Vetores) e **Streamlit** (Frontend de Teste).
 
-## 🚀 Overview
+## 🏗️ Arquitetura
 
-This project implements an AI agent capable of contextually switching between two operating modes:
-1.  **Technical Consulting (RAG)**: Answers questions using a private knowledge base (PDFs, docs, manuals).
-2.  **Log Analysis**: Processes errors, stack traces, and HTTP codes to diagnose issues and suggest fixes.
+*   **API:** FastAPI (Async)
+*   **Cérebro:** LangGraph (Stateful Multi-turn)
+*   **Memória:** PostgreSQL (Checkpoints de conversa)
+*   **RAG:** PGVector + LangChain Postgres
+*   **Observabilidade:** Logs estruturados + LLM Judge + Dashboard Debugger
+*   **Interface:** Streamlit
 
-The system uses **persistent memory** via PostgreSQL, context isolation through **tool-calling orchestration**, and a robust **RAG (Retrieval-Augmented Generation)** pipeline.
+## 🚀 Como Iniciar
 
-## 🏗️ Architecture
+### 1. Configuração do Ambiente
 
-The structure follows principles of modularity and separation of concerns:
-
-```text
-agent-empty/
-├── app/
-│   ├── core/               # Global settings, database, and telemetry
-│   ├── agent/              # LangGraph logic (Nodes, State, Graph, Tools)
-│   ├── rag/                # RAG ingestion pipeline and vector search
-├── frontend/               # Streamlit Dashboard (API Client)
-├── data/                   # Raw documents and evaluation datasets
-├── docker-compose.yml      # Infrastructure (Postgres + PGVector + pgAdmin)
-├── requirements.txt        # Project dependencies
-└── run.py                  # Windows-compatible entrypoint
-```
-
-## 🛠️ Technologies
-
-- **AI Orchestration**: LangGraph & LangChain (Agent-Tools flow)
-- **Models**: Ollama (Llama 3.1 & Nomic Embed Text)
-- **Database**: PostgreSQL with `PGVector` extension
-- **Web API**: FastAPI
-- **Frontend**: Streamlit
-- **State Persistence**: `PostgresSaver` (LangGraph Checkpoint)
-- **Observability**: `structlog` & Streamlit Debugger
-
-## ⚙️ How to Run
-
-### 1. Infrastructure
-```bash
-docker-compose up -d
-```
-
-### 2. Backend API
-```bash
-# Windows
-python run.py
-```
-
-### 3. Frontend Dashboard
-```bash
-# In a new terminal
-.\.venv\Scripts\python.exe -m streamlit run frontend/app.py
-```
-
-## 📚 RAG Ingestion
-
-To feed the agent with your own documents:
-1.  Place files (.pdf, .txt, .png, .jpg) in `data/raw/`.
-2.  Run the ingestion pipeline:
+1.  **Clone o repositório**:
     ```bash
-    python -m app.rag.ingestion
+    git clone <seu-repo>
+    cd agent-empty
     ```
 
-## 🔌 API Endpoints
+2.  **Crie o ambiente virtual**:
+    ```powershell
+    # Windows
+    python -m venv .venv
+    .\.venv\Scripts\Activate
+    ```
+    ```bash
+    # Linux/Mac
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
 
-### `GET /files`
-List all ingested documents.
+3.  **Instale as dependências**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### `POST /chat`
-Payload: `{"message": "...", "thread_id": "..."}`
-- **Response**: Enriched with `response`, `context` (retrieved chunks), and `latency`.
+4.  **Suba o Banco de Dados (Docker)**:
+    ```bash
+    docker-compose up -d
+    ```
 
-## 🔍 Observability (Debugger)
+5.  **Configure o `.env`**:
+    Copie o arquivo de exemplo:
+    ```bash
+    cp .env.example .env
+    ```
+    *(Ajuste as variáveis se necessário, como modelos do Ollama)*.
 
-The **Frontend Dashboard** includes a real-time debugger:
-- **Retrieved Context**: See exactly which document chunks were sent to the LLM.
-- **Latency Monitoring**: Track response time in seconds.
-- **File Inspector**: List all documents currently in the knowledge base.
-- **pgAdmin**: Access `http://localhost:5050` to view history tables.
+### 2. Ingestão de Dados (RAG)
 
-## 🗺️ Roadmap
+Coloque seus arquivos (PDF, TXT, CSV, Imagens) na pasta `data/raw/` e execute:
 
-- [x] Complete implementation of the RAG ingestion pipeline.
-- [x] Integration of semantic search with PGVector.
-- [x] Streamlit Frontend Dashboard.
-- [x] Observability features (latency + retrieved context).
-- [ ] Addition of evaluation metrics via LLM Judge (Planned).
-- [ ] Support for multiple channels (WhatsApp/Telegram).
+```bash
+python -m app.rag.ingestion
+```
+*Dica: O arquivo `sample.txt` já está lá para teste.*
+
+### 3. Executando o Agente
+
+Você precisará de **dois terminais**:
+
+**Terminal 1: Backend (API)**
+```bash
+python run.py
+```
+*Acesse a documentação da API em: http://localhost:8000/docs*
+
+**Terminal 2: Frontend (Dashboard)**
+```bash
+streamlit run frontend/app.py
+```
+*O dashboard abrirá automaticamente em: http://localhost:8501*
+
+## 🧪 Testes e Avaliação
+
+### Avaliação Automática (LLM Judge)
+Para rodar a bateria de testes contra o `golden_dataset.jsonl`:
+
+1.  Certifique-se de ter o modelo `deepseek-r1:8b` (ou configure outro no `judge.py`):
+    ```bash
+    ollama pull deepseek-r1:8b
+    ```
+2.  Execute o juiz:
+    ```bash
+    python -m app.evaluation.judge
+    ```
+3.  Verifique o relatório em `data/datasets/evaluation_report.md`.
 
 ---
-Developed by Andre Muniz
+**Desenvolvido como Architecture Template para Agentes Inteligentes.**
