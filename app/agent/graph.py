@@ -1,47 +1,36 @@
-from typing import Literal
 from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode
 from app.agent.state import AgentState
-from app.agent.nodes.base import router_node, consultant_node, analyst_node
-
-def route_decision(state: AgentState) -> Literal["analyst", "consultant"]:
-    """
-    Conditional edge function that reads the 'intent' from state 
-    and returns the name of the next node.
-    """
-    intent = state.get("intent", "consultation")
-    if intent == "log_analysis":
-        return "analyst"
-    return "consultant"
+from app.agent.nodes import call_model, should_continue, tools
 
 def create_graph(checkpointer=None):
     """
-    Constructs the StateGraph for the agent with routing.
+    Constructs the StateGraph for the tool-calling agent.
     
     Args:
         checkpointer: An initialized checkpointer instance (e.g., PostgresSaver).
     """
     workflow = StateGraph(AgentState)
 
-    # Add nodes
-    workflow.add_node("router", router_node)
-    workflow.add_node("consultant", consultant_node)
-    workflow.add_node("analyst", analyst_node)
+    # Nodes
+    workflow.add_node("agent", call_model)
+    workflow.add_node("tools", ToolNode(tools)) # Prebuilt ToolNode handles tool execution
 
-    # Add edges
-    # START -> Router -> (Decision) -> Expert -> END
-    workflow.add_edge(START, "router")
+    # Edges (Flow)
+    workflow.add_edge(START, "agent")
     
+    # Conditional Edge: Agent -> (Tools OR End)
     workflow.add_conditional_edges(
-        "router",
-        route_decision,
+        "agent",
+        should_continue,
         {
-            "analyst": "analyst",
-            "consultant": "consultant"
+            "tools": "tools",
+            "__end__": END
         }
     )
     
-    workflow.add_edge("analyst", END)
-    workflow.add_edge("consultant", END)
+    # If tool was used, loop back to agent to generate final response
+    workflow.add_edge("tools", "agent")
 
     # Compile the graph
     return workflow.compile(checkpointer=checkpointer)
