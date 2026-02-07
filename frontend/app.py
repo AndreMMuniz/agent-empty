@@ -1,114 +1,109 @@
 import streamlit as st
+import requests
 import uuid
+import os
 import time
-from api_client import APIClient
 
-# Page Configuration
-st.set_page_config(
-    page_title="RAG Agent Dashboard",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Agent Empty - Debugger", page_icon="🕵️", layout="wide")
 
-# Custom Styling
-st.markdown("""
-<style>
-    .chat-message {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        display: flex;
-        flex-direction: column;
-    }
-    .chat-message.user {
-        background-color: #f0f2f6;
-        align-items: flex-end;
-    }
-    .chat-message.assistant {
-        background-color: #e6f3ff;
-        align-items: flex-start;
-    }
-    .source-doc {
-        font-size: 0.8rem;
-        color: #666;
-        margin-top: 0.5rem;
-        padding: 0.5rem;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-</style>
-""", unsafe_allow_html=True)
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+DATA_DIR = "data/raw"  # Caminho local para checar arquivos
 
-# Initialize Session State
+st.title("🕵️ Agent RAG Debugger")
+
+# --- SIDEBAR: Gerenciamento e Status ---
+with st.sidebar:
+    st.header("🎮 Controle")
+    
+    if "thread_id" not in st.session_state:
+        st.session_state.thread_id = str(uuid.uuid4())
+    
+    thread_id = st.text_input("Thread ID (Sessão)", value=st.session_state.thread_id)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 Reset ID"):
+            st.session_state.thread_id = str(uuid.uuid4())
+            st.session_state.messages = []
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Limpar Chat"):
+            st.session_state.messages = []
+            st.rerun()
+
+    st.divider()
+    
+    # Lista de Arquivos Ingeridos (Visualização)
+    st.header("📂 Base de Conhecimento")
+    try:
+        files = os.listdir(DATA_DIR)
+        if files:
+            for f in files:
+                st.caption(f"📄 {f}")
+        else:
+            st.warning("Nenhum arquivo em data/raw")
+    except FileNotFoundError:
+        st.error(f"Pasta {DATA_DIR} não encontrada")
+
+# --- CHAT PRINCIPAL ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "thread_id" not in st.session_state:
-    st.session_state.thread_id = str(uuid.uuid4())
+# Renderizar mensagens anteriores
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+        # Se tiver fontes salvas no histórico, mostra também
+        if "sources" in msg and msg["sources"]:
+            with st.expander("📚 Contexto Recuperado (RAG)"):
+                for idx, source in enumerate(msg["sources"]):
+                    st.text(f"--- Trecho {idx+1} ---")
+                    st.caption(source)
 
-if "api_client" not in st.session_state:
-    st.session_state.api_client = APIClient()
-
-# Sidebar
-with st.sidebar:
-    st.title("🤖 Agent Controls")
-    
-    # Connection Status
-    if st.session_state.api_client.check_health():
-        st.success("API Connected ✅")
-    else:
-        st.error("API Disconnected ❌")
-        st.info("Make sure the backend is running on http://localhost:8000")
-    
-    st.divider()
-    
-    st.caption(f"Session ID: {st.session_state.thread_id}")
-    
-    if st.button("New Chat / Clear History"):
-        st.session_state.messages = []
-        st.session_state.thread_id = str(uuid.uuid4())
-        st.rerun()
-
-# Main Chat Interface
-st.title("📚 Knowledge Base Assistant")
-st.markdown("Ask questions about your documents and get answers with citations.")
-
-# Display Chat History
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Chat Input
-if prompt := st.chat_input("Ask a question..."):
-    # Add User Message
+# Input do Usuário
+if prompt := st.chat_input("Pergunte algo aos seus dados..."):
+    # 1. Usuário
+    st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Get Assistant Response
+
+    # 2. Resposta do Bot
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        message_placeholder.markdown("Thinking...")
+        placeholder = st.empty()
+        placeholder.markdown("⏳ *Consultando base de vetores...*")
         
+        start_time = time.time()
         try:
-            # Call API
-            api_response = st.session_state.api_client.send_message(
-                message=prompt,
-                thread_id=st.session_state.thread_id
-            )
+            payload = {"message": prompt, "thread_id": st.session_state.thread_id}
+            response = requests.post(f"{API_URL}/chat", json=payload)
+            end_time = time.time()
+            latency = end_time - start_time
             
-            if "error" in api_response:
-                response_text = f"❌ Error: {api_response.get('error')}"
-            else:
-                response_text = api_response.get("response", "No response received.")
+            if response.status_code == 200:
+                data = response.json()
+                content = data.get("response", "")
+                sources = data.get("sources", [])
                 
-            # Simulate streaming effect (optional polish)
-            message_placeholder.markdown(response_text)
-            
-            # Store Assistant Message
-            st.session_state.messages.append({"role": "assistant", "content": response_text})
-            
+                # Exibe resposta final
+                placeholder.markdown(content)
+                
+                # Exibe Contexto de RAG (Se houver)
+                if sources:
+                    with st.expander(f"📚 Contexto Recuperado ({len(sources)} trechos) - {latency:.2f}s"):
+                        for idx, source in enumerate(sources):
+                            st.markdown(f"**Trecho {idx+1}:**")
+                            st.info(source)
+                else:
+                    st.caption(f"⏱️ Resposta gerada em {latency:.2f}s (Sem uso de ferramentas)")
+
+                # Salva no histórico com as fontes
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": content,
+                    "sources": sources
+                })
+                
+            else:
+                placeholder.error(f"Erro {response.status_code}: {response.text}")
+        
         except Exception as e:
-            message_placeholder.markdown(f"An error occurred: {str(e)}")
+            placeholder.error(f"Erro de conexão: {e}")

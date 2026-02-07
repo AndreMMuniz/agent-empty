@@ -50,14 +50,33 @@ app = FastAPI(
 class ChatRequest(BaseModel):
     message: str
     thread_id: str | None = None
+    sources: list[str] = []  # New field for fonts
+
+import time
+from pathlib import Path
+from typing import List, Optional
 
 class ChatResponse(BaseModel):
     response: str
     thread_id: str | None = None
+    context: List[str] = [] # Retrieved documents content
+    latency: float = 0.0     # Response time in seconds
 
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Agent API is running with Lifecycle Management"}
+
+@app.get("/files")
+async def list_files():
+    """List all available files in the raw data directory."""
+    try:
+        raw_path = Path("data/raw")
+        if not raw_path.exists():
+            return {"files": []}
+        files = [f.name for f in raw_path.iterdir() if f.is_file()]
+        return {"files": files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
@@ -68,6 +87,8 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     try:
+        start_time = time.perf_counter()
+        
         # Prepare input for the graph
         inputs = {"messages": [HumanMessage(content=request.message)]}
         
@@ -77,21 +98,38 @@ async def chat(request: ChatRequest):
         # Invoke the graph (async)
         result = await agent_runnable.ainvoke(inputs, config=config)
         
-        # Extract the last message content
+        end_time = time.perf_counter()
+        latency = round(end_time - start_time, 2)
+        
+        # Extract the last message content (Agent response)
         last_message = result["messages"][-1]
         response_content = last_message.content
         
+        # Extract context from ToolMessages
+        context = []
+        for msg in result["messages"]:
+            if msg.type == "tool":
+                # This message contains the output from the tool (RAG search results)
+                context.append(str(msg.content))
+        
         # STRUCTURED LOGGING (Side Effect)
         if request.thread_id:
+            log_data = {
+                "response": response_content,
+                "latency": latency,
+                "context_length": len(context)
+            }
             await log_analysis(
                 thread_id=request.thread_id, 
                 query=request.message, 
-                result=response_content
+                result=log_data
             )
         
         return ChatResponse(
             response=response_content,
-            thread_id=request.thread_id
+            thread_id=request.thread_id,
+            context=context,
+            latency=latency
         )
             
     except Exception as e:
