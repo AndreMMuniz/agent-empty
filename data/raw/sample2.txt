@@ -1,0 +1,8 @@
+This is a second sample document about a different topic.
+    
+    It discusses the importance of vector embeddings in modern AI systems.
+    Vector embeddings allow us to represent text as numerical vectors,
+    which can then be compared using similarity metrics.
+    
+    This enables semantic search capabilities that go beyond simple
+    keyword matching.

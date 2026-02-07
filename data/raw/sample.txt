@@ -1,0 +1,8 @@
+This is a sample text document for testing the RAG ingestion pipeline.
+    
+    It contains multiple paragraphs to test the chunking functionality.
+    The text splitter should break this into appropriate chunks based on
+    the configured chunk size and overlap settings.
+    
+    This is important for ensuring that the retrieval system can find
+    relevant information efficiently when users ask questions.
