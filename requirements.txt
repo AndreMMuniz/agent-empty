@@ -23,9 +23,11 @@ pillow
 lxml
 
 # --- Database & Vectors ---
+langchain-postgres
 psycopg[binary]
 psycopg_pool
 pgvector
+psycopg2-binary
 
 # --- Observability ---
 structlog

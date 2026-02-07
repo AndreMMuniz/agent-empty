@@ -6,7 +6,7 @@ It provides a singleton instance of the vector store configured with Ollama embe
 """
 
 from typing import Optional
-from langchain_community.vectorstores.pgvector import PGVector
+from langchain_postgres import PGVector
 from langchain_ollama import OllamaEmbeddings
 from app.core.config import settings
 import structlog
@@ -57,11 +57,12 @@ def get_vector_store() -> PGVector:
         
         embeddings = get_embeddings()
         
-        # Initialize PGVector with connection string and embeddings
+        # Initialize PGVector with the new langchain-postgres syntax
         _vector_store = PGVector(
+            embeddings=embeddings,
             collection_name=settings.VECTOR_COLLECTION_NAME,
-            connection_string=settings.DATABASE_URL,
-            embedding_function=embeddings,
+            connection=settings.DATABASE_URL,
+            use_jsonb=True,
         )
         
         logger.info("Vector store initialized successfully")
