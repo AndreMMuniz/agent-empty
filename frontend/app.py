@@ -22,12 +22,12 @@ with st.sidebar:
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 Reset ID"):
+        if st.button("🔄 Reset ID", use_container_width=True):
             st.session_state.thread_id = str(uuid.uuid4())
             st.session_state.messages = []
             st.rerun()
     with col2:
-        if st.button("🗑️ Limpar Chat"):
+        if st.button("🗑️ Limpar", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
 
