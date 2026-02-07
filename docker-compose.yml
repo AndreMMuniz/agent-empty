@@ -23,4 +23,19 @@ services:
       - db
 
 volumes:
-  postgres_data:
+  postgres_data: # Frontend de Testes
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile # Se você tiver Dockerfile, senão use image python
+    command: streamlit run frontend/main.py --server.port 8501 --server.address 0.0.0.0
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://host.docker.internal:8000 # Para acessar o FastAPI rodando local
+    depends_on:
+      - db

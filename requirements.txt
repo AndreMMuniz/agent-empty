@@ -32,3 +32,8 @@ psycopg2-binary
 # --- Observability ---
 structlog
 opentelemetry-api
+
+# --- Frontend ---
+streamlit
+requests
+watchdog
